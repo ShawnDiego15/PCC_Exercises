@@ -1,0 +1,10 @@
+In python you can use classes to work across other files.
+In python you can create methods to call to increase efficiency.
+In python you can store methods in classes or create them within an individual file.
+In python you can call classes from a standard library, such as randint.
+In python you can read files and work with the data in the text files.
+In python you can use if statements to accomplish different results.
+In python you can work with lists, often using loops to accomplish a given task.
+In python you can store various variables and data types.
+In python you can allow user input to work with your program.
+In python you can use dictionaries, which are similar to JSON objects.
