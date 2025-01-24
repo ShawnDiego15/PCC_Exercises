@@ -11,7 +11,7 @@ class Raindrop(Sprite):
         self.settings = rd_game.settings
 
         # Load the raindrop image and get its rect.
-        self.image = pygame.image.load('chapter13_exercises/images/raindrop.png')
+        self.image = pygame.image.load('Chapter13/images/raindrop.png')
         self.rect = self.image.get_rect()
 
         # Start each new Raindrop near the top left of the screen.
