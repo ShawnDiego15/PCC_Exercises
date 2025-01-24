@@ -1299,10 +1299,10 @@ if __name__ == '__main__':
     1. For now, the general rule appears to be to plan to have `self.instance_name` prefixing all fields/methods BESIDES the `assert()` method of choice.
 5. Lastly, do not forget the `if __name__` block.
 
-### Chapter 12
+## Chapter 12
 In this chapter, we began working on a game, Alien Invasion, using Pygame. Chapter 12 focused on building out our ship. The ship is allowed to move from one side of the screen to the other, and also can shoot a bullet up the screen.
 
-## 12-1: Blue Sky; Page 238
+### 12-1: Blue Sky; Page 238
 Make a Pygame window with a blue background.
 
 #### *blue_sky.py*
@@ -1341,7 +1341,7 @@ if __name__ == '__main__':
     eg.run_game()
 ```
 
-## 12-2: Game Character; Page 238
+### 12-2: Game Character; Page 238
 Find a bitmap image of a game character you like or convert an image to a bitmap. Make a class that draws the character at the center of the screen and match the background color of the image to the background color of the screen, or vice versa.
 
 #### *game_character.py*
@@ -1410,10 +1410,10 @@ class Character:
         self.screen.blit(self.image, self.rect)
 ```
 
-## 12-3 Pygame Documentation; Page 246
+### 12-3 Pygame Documentation; Page 246
 We're far enough into the game that you might want to look at some of the Pygame documetation. The Pygame home page is at *https://www.pygame.org/*, and the home page for the documentation is at *https://www.pygame.org/docs/*. Just skim the documentation for now. You won't need it to complete this project, but it will help if you want to modify Alien Invasion or make your own game afterward.
 
-## 12-4 Rocket; Page 246
+### 12-4 Rocket; Page 246
 Make a game that begins with a rocket in the center of the screen. Allow the player to move the rocket up, down, left or right using the four arrow keys. Make sure the rocket never moves beyond any edge of the screen.
 
 #### *rocket_game.py*
@@ -1567,7 +1567,7 @@ class Settings:
 
 ***NOTE:*** Something to take away from this exercise is how you visualize the axis. Since (0, 0) is the top left corner, going up is actually decreasing the Y and vice versa for going down. In addition to this, there are a number of lines that need to change or be added when working on an additional axis.
 
-## 12-5 Keys; Page 246
+### 12-5 Keys; Page 246
 Make a Pygame file that creates an empty screen. In the event loop, print the event.key attribute whenever a pygame.KEYDOWN event is detected. Run the program and press various keys to see how Pygame responds.
 
 #### *keys.py*
@@ -1644,7 +1644,7 @@ class Settings:
 
 ***NOTE:*** The `event.key` attribute maps to what appears to be a numerical ID. For example, space is 32. The actual keys such as `pygame.K_SPACE` also map to a numerical value that is identical to the `event.key`. This explains how `event.key == pygame.K_SPACE` would work. This is demonstrated in this exercise by pressing space and viewing the output.
 
-## 12-6 Sideways Shooter; Page 253
+### 12-6 Sideways Shooter; Page 253
 Write a game that places a ship on the left side of the screen and allows the player to move the ship up and down. Make the ship fire a bullet that travels right across the screen when the player presses the space-bar. Make sure bullets are deleted once they disappear off the screen.
 
 #### *sideways_shooter.py*
@@ -1839,5 +1839,537 @@ class Settings:
         self.missiles_allowed = 3
 ```
 
-### Chapter 13
+## Chapter 13
 In this chapter, we continue working on our Alien Invasion game. In this chapter we focus on building out the enemy of the game, the Aliens. The aliens appear in a 'fleet' and begin working their way down the screen and will disappear as bulets hit them.
+
+### 13-1 Stars; Page 264
+Find an image of a star. Make a grid of stars appear on the screen.
+
+#### *star.py*
+```
+import pygame
+from pygame.sprite import Sprite
+
+class Star(Sprite):
+    """A class to represent a single star in the sky."""
+
+    def __init__(self, sg_game):
+        """Initialize the star and set its starting position."""
+        super().__init__()
+        self.screen = sg_game.screen
+
+        # Load the star image and set its rect attribute.
+        self.image = pygame.image.load('chapter13_exercises/images/star.png')
+        self.rect = self.image.get_rect()
+
+        # Start each new star near the top left of the screen.
+        self.rect.x = self.rect.width
+        self.rect.y = self.rect.height
+
+        # Store the star's exact vertical position.
+        self.y = float(self.rect.y)
+```
+
+#### *star_settings.py*
+```
+# Settings for Star Game
+
+class Settings:
+    """A class to store all settings for Star Game."""
+
+    def __init__(self):
+        """Initialize the game's settings."""
+        # Screen settings
+        self.screen_width = 1200
+        self.screen_height = 800
+        self.bg_color = (230, 230, 230)
+```
+
+#### *stars_game.py*
+```
+# Star Game
+
+import sys
+
+import pygame
+
+from star_settings import Settings
+from star import Star
+
+class StarGame:
+    """Overall class to manage game assets and behavior."""
+
+    def __init__(self):
+        """Initialize the game, and create game resources."""
+        pygame.init()
+        self.settings = Settings()
+
+        self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
+        pygame.display.set_caption("Star Game")
+
+        self.stars = pygame.sprite.Group()
+
+        self._create_sky()
+
+    def run_game(self):
+        """Start the main loop for the game."""
+        while True:
+            # Watch for keyboard and mouse events.
+            self._check_events()
+            self._update_screen()
+
+    def _check_events(self):
+        """Respond to keypresses and mouse events."""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                self._check_keydown_events(event)
+
+    def _check_keydown_events(self, event):
+        """Respond to keypresses."""
+        if event.key == pygame.K_ESCAPE:
+            sys.exit()
+
+    def _create_sky(self):
+        """Create the sky of stars."""
+        # Create an star and find the number of stars in a row.
+        # Spacing between each star is equal to two star widths.
+        star = Star(self)
+        star_width, star_height = star.rect.size
+        available_space_x = self.settings.screen_width - (star_width)
+        number_stars_x = available_space_x // (2 * star_width)
+
+        # Determine the number of rows of stars that fit on the screen.
+        available_space_y = (self.settings.screen_height - (2 * star_height))
+        number_rows = available_space_y // (2 * star_height) 
+
+        # Create the full sky of stars.
+        for row_number in range(number_rows):
+            # Create an star and place it in the row.
+            for star_number in range(number_stars_x):
+                self._create_star(star_number, row_number)
+
+    def _create_star(self, star_number, row_number):
+        """Create an star and place it in the row."""
+        star = Star(self)
+        star_width, star_height = star.rect.size
+        star.x = star_width + 2 * star_width * star_number
+        star.rect.x = star.x
+        star.rect.y = star.rect.height + 2 * star.rect.height * row_number
+        self.stars.add(star)
+        
+
+    def _update_screen(self):
+        """Update the images on the screen, and flip to the new screen."""
+        # Redraw the screen during each pass through the loop.
+        self.screen.fill(self.settings.bg_color)
+        self.stars.draw(self.screen)
+
+        # Make the most recently drawn screen visible.
+        pygame.display.flip()
+
+if __name__ == '__main__':
+    # Make a new game instance, and run the game.
+    sg = StarGame()
+    sg.run_game()
+```
+
+### 13-2 Better Stars; Page 264
+You can make a more realistic star pattern by introducing randomness when you place each star. Recall that you can get a random number like this:
+
+```
+from random import randint
+random_number = randint(-10, 10)
+```
+
+This code returns a random integer between -10 and 10. Using your code in Exercise 13-1, adjust each star's position by a random amount.
+
+#### *star_game.py*
+```
+# Star Game
+
+import sys
+
+import pygame
+
+from star_settings import Settings
+from star import Star
+from random import randint
+
+class StarGame:
+    """Overall class to manage game assets and behavior."""
+
+    def __init__(self):
+        """Initialize the game, and create game resources."""
+        pygame.init()
+        self.settings = Settings()
+
+        self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
+        pygame.display.set_caption("Star Game")
+
+        self.stars = pygame.sprite.Group()
+
+        self._create_sky()
+
+    def run_game(self):
+        """Start the main loop for the game."""
+        while True:
+            # Watch for keyboard and mouse events.
+            self._check_events()
+            self._update_screen()
+
+    def _check_events(self):
+        """Respond to keypresses and mouse events."""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                self._check_keydown_events(event)
+
+    def _check_keydown_events(self, event):
+        """Respond to keypresses."""
+        if event.key == pygame.K_ESCAPE:
+            sys.exit()
+
+    def _create_sky(self):
+        """Create the sky of stars."""
+        # Create an star and find the number of stars in a row.
+        # Spacing between each star is equal to two star widths.
+        star = Star(self)
+        star_width, star_height = star.rect.size
+        available_space_x = self.settings.screen_width - (star_width)
+        number_stars_x = available_space_x // (2 * star_width)
+
+        # Determine the number of rows of stars that fit on the screen.
+        available_space_y = (self.settings.screen_height - (2 * star_height))
+        number_rows = available_space_y // (2 * star_height) 
+
+        # Create the full sky of stars.
+        for row_number in range(number_rows):
+            # Create an star and place it in the row.
+            for star_number in range(number_stars_x):
+                self._create_star(star_number, row_number)
+
+    def _create_star(self, star_number, row_number):
+        """Create an star and place it in the row."""
+        star = Star(self)
+        star_width, star_height = star.rect.size
+        star.x = star_width + 2 * star_width * star_number
+        star.rect.x = star.x
+        star.rect.y = star.rect.height + 2 * star.rect.height * row_number
+
+        # Randomize Position
+        star.rect.x += randint(-5, 5)
+        star.rect.y += randint(-5, 5)
+
+        self.stars.add(star)
+        
+
+    def _update_screen(self):
+        """Update the images on the screen, and flip to the new screen."""
+        # Redraw the screen during each pass through the loop.
+        self.screen.fill(self.settings.bg_color)
+        self.stars.draw(self.screen)
+
+        # Make the most recently drawn screen visible.
+        pygame.display.flip()
+
+if __name__ == '__main__':
+    # Make a new game instance, and run the game.
+    sg = StarGame()
+    sg.run_game()
+```
+
+### 13-3 Raindrops; Page 268
+Find an image of a raindrop and create a grid of raindrops. Make the raindrops fall toward the bottom of the screen until they disappear.
+As part of an extra item, I'll have the raindrops appears somewhat randomly on the screen.
+
+#### *raindrop_game.py*
+```
+# Raindrop Game
+
+import sys
+import pygame
+
+from raindrop_settings import Settings
+from raindrop import Raindrop
+from random import randint
+
+class RaindropGame:
+    """Overall class for the Raindrop Game"""
+
+    def __init__(self):
+        """Initialize the game"""
+        pygame.init()
+        self.settings = Settings()
+
+        self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
+        pygame.display.set_caption("Raindrop Game")
+
+        self.raindrops = pygame.sprite.Group()
+
+        self._fill_sky()
+
+    def run_game(self):
+        """Start the main loop for the game."""
+        while True:    
+            self._check_events()
+            self.raindrops.update()
+            self._update_screen()
+
+    def _check_events(self):
+        """Check keydown events, only looking to catch if 'esc' is entered."""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
+
+    def _fill_sky(self):
+        """Create a sky of raindrops."""
+        raindrop = Raindrop(self)
+        raindrop_width, raindrop_height = raindrop.rect.size
+        available_space_x = self.settings.screen_width - (raindrop_width)
+        number_raindrops_x = available_space_x // (2 * raindrop_width)
+
+        # Determine the number of rows of raindrops that fit on the screen.
+        available_space_y = self.settings.screen_height
+        number_rows = available_space_y // (2 * raindrop_height) 
+
+        # Create the full sky of raindrops.
+        for row_number in range(number_rows):
+            # Create an raindrop and place it in the row.
+            for raindrop_number in range(number_raindrops_x):
+                self._create_raindrop(raindrop_number, row_number)
+
+    def _create_raindrop(self, raindrop_number, row_number):
+        """Create an raindrop and place it in the row."""
+        raindrop = Raindrop(self)
+        raindrop_width, raindrop_height = raindrop.rect.size
+        raindrop.rect.x = raindrop_width + 2 * raindrop_width * raindrop_number
+        raindrop.y = 2 * raindrop.rect.height * row_number
+        raindrop.rect.y = raindrop.y
+
+        # Randomize Position
+        raindrop.rect.x += randint(-10, 10)
+        raindrop.rect.y += randint(-10, 10)
+
+        self.raindrops.add(raindrop)
+
+    def _update_screen(self):
+        """Update the images on the screen, and flip to the new screen."""
+        # Redraw the screen during each pass through the loop.
+        self.screen.fill(self.settings.bg_color)
+        self.raindrops.draw(self.screen)
+
+        # Make the most recently drawn screen visible.
+        pygame.display.flip()
+
+if __name__ == '__main__':
+    # Make a new game instance, and run the game.
+    rd = RaindropGame()
+    rd.run_game()
+```
+
+#### *raindrop.py*
+```
+import pygame
+from pygame.sprite import Sprite
+
+class Raindrop(Sprite):
+    """A class to represent a single raindrop."""
+
+    def __init__(self, rd_game):
+        """Initialize a raindrop."""
+        super().__init__()
+        self.screen = rd_game.screen
+        self.settings = rd_game.settings
+
+        # Load the raindrop image and get its rect.
+        self.image = pygame.image.load('chapter13_exercises/images/raindrop.png')
+        self.rect = self.image.get_rect()
+
+        # Start each new Raindrop near the top left of the screen.
+        self.rect.x = self.rect.width
+        self.rect.y = self.rect.height
+
+        # Store the Raindrop's exact vertical position.
+        self.y = float(self.rect.y)
+
+    def update(self):
+        """Move the raindrop down the screen."""
+        self.y += self.settings.drop_speed
+        self.rect.y = self.y
+```
+
+#### *raindrop_settings.py*
+```
+# Settings for Raindrop Game
+
+class Settings:
+    """A class to store all settings for Raindrop Game."""
+
+    def __init__(self):
+        """Initialize the game's settings."""
+        # Screen settings
+        self.screen_width = 1200
+        self.screen_height = 800
+        self.bg_color = (230, 230, 230)
+
+        # Raindrop Settings
+        self.drop_speed = 1
+```
+
+Takeaway from this exercise is to focus on the rect x and y's we are working with. I encountered an issue where all raindrops were appearing in one row (or, only one row was appearing). This was resolved by making changes to `_create_raindrop()`.
+
+### 13-4 Steady Rain; Page 268
+Modify your code in Exercise 13-3 so when a row of rain-drops disappears off the bottom of the screen, a new row appears at the top of the screen and begins to fall.
+
+#### *raindrop_game.py*
+```
+# Raindrop Game
+
+import sys
+import pygame
+
+from raindrop_settings import Settings
+from raindrop import Raindrop
+from random import randint
+
+class RaindropGame:
+    """Overall class for the Raindrop Game"""
+
+    def __init__(self):
+        """Initialize the game"""
+        pygame.init()
+        self.settings = Settings()
+
+        self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
+        pygame.display.set_caption("Raindrop Game")
+
+        self.raindrops = pygame.sprite.Group()
+
+        self._fill_sky()
+
+    def run_game(self):
+        """Start the main loop for the game."""
+        while True:    
+            self._check_events()
+            self._update_raindrops()
+            self._update_screen()
+
+    def _check_events(self):
+        """Check keydown events, only looking to catch if 'esc' is entered."""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
+
+    def _fill_sky(self):
+        """Create a sky of raindrops."""
+        raindrop = Raindrop(self)
+        raindrop_width, raindrop_height = raindrop.rect.size
+        available_space_x = self.settings.screen_width - (raindrop_width)
+
+
+        self.number_raindrops_x = available_space_x // (2 * raindrop_width)
+
+        # Determine the number of rows of raindrops that fit on the screen.
+        available_space_y = self.settings.screen_height
+        number_rows = available_space_y // (2 * raindrop_height) 
+
+        # Create the full sky of raindrops.
+        for row_number in range(number_rows):
+            self._create_row(row_number)
+
+    def _create_raindrop(self, raindrop_number, row_number):
+        """Create an raindrop and place it in the row."""
+        raindrop = Raindrop(self)
+        raindrop_width, raindrop_height = raindrop.rect.size
+        raindrop.rect.x = raindrop_width + 2 * raindrop_width * raindrop_number
+        raindrop.y = 2 * raindrop.rect.height * row_number
+        raindrop.rect.y = raindrop.y
+
+        # Randomize Position
+        raindrop.rect.x += randint(-10, 10)
+        raindrop.rect.y += randint(-10, 10)
+
+        self.raindrops.add(raindrop)
+
+    def _create_row(self, row_number):
+        """Create a single row of raindrops."""
+        for raindrop_number in range(self.number_raindrops_x):
+            self._create_raindrop(raindrop_number, row_number)
+
+    def _update_raindrops(self):
+        """Update the Raindrops."""
+        self.raindrops.update()
+
+        make_new_drops = False
+        for raindrop in self.raindrops.copy():
+            if raindrop.check_edges():
+                self.raindrops.remove(raindrop)
+                make_new_drops = True
+
+        # Make a new row as needed.
+        if make_new_drops:
+            self._create_row(0)
+
+    def _update_screen(self):
+        """Update the images on the screen, and flip to the new screen."""
+        # Redraw the screen during each pass through the loop.
+        self.screen.fill(self.settings.bg_color)
+        self.raindrops.draw(self.screen)
+
+        # Make the most recently drawn screen visible.
+        pygame.display.flip()
+
+if __name__ == '__main__':
+    # Make a new game instance, and run the game.
+    rd = RaindropGame()
+    rd.run_game()
+```
+
+#### *raindrop.py*
+```
+import pygame
+from pygame.sprite import Sprite
+
+class Raindrop(Sprite):
+    """A class to represent a single raindrop."""
+
+    def __init__(self, rd_game):
+        """Initialize a raindrop."""
+        super().__init__()
+        self.screen = rd_game.screen
+        self.settings = rd_game.settings
+
+        # Load the raindrop image and get its rect.
+        self.image = pygame.image.load('chapter13_exercises/images/raindrop.png')
+        self.rect = self.image.get_rect()
+
+        # Start each new Raindrop near the top left of the screen.
+        self.rect.x = self.rect.width
+        self.rect.y = self.rect.height
+
+        # Store the Raindrop's exact vertical position.
+        self.y = float(self.rect.y)
+
+    def check_edges(self):
+        """Return True if raindrop is at the bottom of the screen."""
+        screen_rect = self.screen.get_rect()
+
+        if self.rect.top > screen_rect.bottom:
+            return True
+        else:
+            return False
+
+    def update(self):
+        """Move the raindrop down the screen."""
+        self.y += self.settings.drop_speed
+        self.rect.y = self.y
+```
