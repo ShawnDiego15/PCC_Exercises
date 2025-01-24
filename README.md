@@ -7,3 +7,5 @@ Each solution is located within the folder for the respective chapter the exerci
 Starting in chapter 12, the chapters shift into projects. 
 
 The overview.md file is work in progress of a full outline of all exercises.
+
+Despite having this collection available in a repository, it is likely some of later exercises are recreated in their own Repo. If this proves to be the case, I will keep this collection updated and list related repositories within this README.
