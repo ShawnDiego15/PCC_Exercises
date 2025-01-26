@@ -1,6 +1,7 @@
 # Main file for Sideways Shooter game
 
 import sys
+import time
 
 import pygame
 from ss_settings import Settings
@@ -8,6 +9,9 @@ from jet import Jet
 from missile import Missile
 from bat import Bat
 from random import random
+from game_stats import GameStats
+
+start_time = time.time()
 
 class SidewaysShooter:
     """Main class for the Sideways Shooter game"""
@@ -19,6 +23,8 @@ class SidewaysShooter:
 
         self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
         pygame.display.set_caption("Sideways Shooter")
+
+        self.game_stats = GameStats(self)
 
         self.jet = Jet(self)
         self.missiles = pygame.sprite.Group()
@@ -89,7 +95,17 @@ class SidewaysShooter:
     def _check_missile_bat_collisions(self):
         """Check if any missiles have collided with bats."""
         collisions = pygame.sprite.groupcollide(self.missiles, self.bats, False, True)
-
+        
+        
+        if len(collisions) > 0:
+            if self.game_stats.bats_shot <= 50:
+                self.game_stats.bats_shot += 1
+            else:
+                self.game_stats.game_active = False
+                end_time = time.time()
+                elapsed_time = end_time - start_time
+                print(f"Congratulations, you shot 50 bats in {round(elapsed_time)} seconds and have beat the game!")
+                sys.exit()
 
     def _create_bat(self):
         """Create a bat."""
