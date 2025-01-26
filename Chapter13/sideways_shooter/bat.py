@@ -12,7 +12,7 @@ class Bat(Sprite):
         self.settings = ss_game.settings
 
         # Load the bat image and get its rect.
-        self.image = pygame.image.load('chapter13_exercises/images/bat.png')
+        self.image = pygame.image.load('Chapter13/images/bat.png')
         self.rect = self.image.get_rect()
 
         # Start each bat at a random position on the right side of the screen.
