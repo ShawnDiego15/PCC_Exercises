@@ -13,7 +13,7 @@ class Jet:
         self.settings = ss_game.settings
 
         # Load the Jet Image and get its rect
-        self.image = pygame.image.load('chapter12_exercises/images/jet.bmp')
+        self.image = pygame.image.load('Chapter12/images/jet.bmp')
         self.rect = self.image.get_rect()
         self.screen_rect = ss_game.screen.get_rect()
 
