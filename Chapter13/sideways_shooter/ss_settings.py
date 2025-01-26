@@ -25,3 +25,4 @@ class Settings:
         # Bat Settings
         self.bat_speed = 0.5
         self.bat_frequency = 0.008
+        self.bats_shot = 0
