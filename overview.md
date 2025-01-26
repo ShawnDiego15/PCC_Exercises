@@ -2373,3 +2373,283 @@ class Raindrop(Sprite):
         self.y += self.settings.drop_speed
         self.rect.y = self.y
 ```
+
+### 13-5 Sideways Shooter Part 2
+Try to develop Sideways Shooter from exercise 12-6 to the same point we've brought Alien Invasion. Add a fleet of enemies, and make them move sideways towards the ship. Or, write code that places aliens at random positions along the right side of the screen and then sends them toward the ship. Also, write code that makes the aliens dissapear when they're hit.
+
+For my example, I am using bats as the enemy. Additional items I've added were:
+- Bats remove themselves from the screen upon reaching the border.
+- Bullets pass through the bats all the way to the edge of the screen.
+
+#### *sideways_shooter.py*
+```
+# Main file for Sideways Shooter game
+
+import sys
+
+import pygame
+from ss_settings import Settings
+from jet import Jet
+from missile import Missile
+from bat import Bat
+from random import random
+
+class SidewaysShooter:
+    """Main class for the Sideways Shooter game"""
+
+    def __init__(self):
+        """Initialze the game."""
+        pygame.init()
+        self.settings = Settings()
+
+        self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
+        pygame.display.set_caption("Sideways Shooter")
+
+        self.jet = Jet(self)
+        self.missiles = pygame.sprite.Group()
+        self.bats = pygame.sprite.Group()
+
+    def run_game(self):
+        """Main Loop to Run the Game."""
+        while True:
+            self._check_events()
+            self._create_bat()
+            self.jet.update()
+            self._update_missiles()
+            self.bats.update()
+            self._remove_bats()
+            self._update_screen()
+
+    def _check_events(self):
+        """Respond to keypresses and mouse events."""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                self._check_keydown_events(event)
+            elif event.type == pygame.KEYUP:
+                self._check_keyup_events(event)
+
+    def _check_keydown_events(self, event):
+        """Respond to key presses."""
+        if event.key == pygame.K_UP:
+            self.jet.moving_up = True
+        elif event.key == pygame.K_DOWN:
+            self.jet.moving_down = True
+        elif event.key == pygame.K_ESCAPE:
+            sys.exit()
+        elif event.key == pygame.K_SPACE:
+            self._fire_missile()
+
+    def _check_keyup_events(self, event):
+        if event.key == pygame.K_UP:
+            self.jet.moving_up = False
+        elif event.key == pygame.K_DOWN:
+            self.jet.moving_down = False
+
+    def _fire_missile(self):
+        """Create a new missile and add it to the missiles group."""
+        if len(self.missiles) < self.settings.missiles_allowed:
+            new_missile = Missile(self)
+            self.missiles.add(new_missile)
+
+    def _update_missiles(self):
+        """Update position of missiles and get rid of old missiles."""
+        # Update missile positions.
+        self.missiles.update()
+
+        # Get rid of missiles that have disappeared.
+        for missile in self.missiles.copy():
+            if missile.rect.left >= self.screen.get_rect().right:
+                self.missiles.remove(missile)
+
+        self._check_missile_bat_collisions()
+
+    def _remove_bats(self):
+        """Remove a bat that has reached the end of the screen."""
+        for bat in self.bats.copy():
+            if bat.rect.right <= self.screen.get_rect().left:
+                self.bats.remove(bat)
+
+    def _check_missile_bat_collisions(self):
+        """Check if any missiles have collided with bats."""
+        collisions = pygame.sprite.groupcollide(self.missiles, self.bats, False, True)
+
+
+    def _create_bat(self):
+        """Create a bat."""
+        if random() < self.settings.bat_frequency:
+            bat = Bat(self)
+            self.bats.add(bat)
+            print(len(self.bats))
+
+    def _update_screen(self):
+        """"Update the images on the screen, and flip to the new screen."""
+        # Redraw the screen during each pass through the loop.
+        self.screen.fill(self.settings.bg_color)
+        self.jet.blitme()
+        for missile in self.missiles.sprites():
+            missile.draw_missile()
+
+        self.bats.draw(self.screen)
+
+        # Make the most recently drawn screen visible
+        pygame.display.flip()
+            
+
+
+if __name__ == '__main__':
+    # Make a new game instance, and run the game.
+    ss = SidewaysShooter()
+    ss.run_game()
+```
+
+#### *jet.py*
+```
+# Exercise 12-6; Sideways Shooter
+
+# Main File for the Jet Class
+
+import pygame
+
+class Jet:
+    """A class to manage the jet."""
+
+    def __init__(self, ss_game):
+        """Initialze the jet and set it's starting position."""
+        self.screen = ss_game.screen
+        self.settings = ss_game.settings
+
+        # Load the Jet Image and get its rect
+        self.image = pygame.image.load('chapter12_exercises/images/jet.bmp')
+        self.rect = self.image.get_rect()
+        self.screen_rect = ss_game.screen.get_rect()
+
+        # Start each new Jet at the left center of the screen
+        self.rect.midleft = self.screen_rect.midleft
+
+        # Store a decimal value for the jet's vertical position.
+        self.y = float(self.rect.y)
+
+        # Movement flags
+        self.moving_up = False
+        self.moving_down = False
+
+    def update(self):
+        """Update the Jets position based on the movement flag."""
+        # Update the jets y value, not the rect.
+        if self.moving_up and self.rect.top > 0:
+            self.y -= self.settings.jet_speed
+        if self.moving_down and self.rect.bottom < self.screen_rect.bottom:
+            self.y += self.settings.jet_speed
+
+        # Update the rect object from self.y.
+        self.rect.y = self.y
+
+    def blitme(self):
+        """Draw the ship at its current location."""
+        self.screen.blit(self.image, self.rect)
+```
+
+#### *missile.py*
+```
+# Exercise 12-6; Sideways Shooter;
+
+# Main file for Missle class.
+
+import pygame
+from pygame.sprite import Sprite
+
+class Missile(Sprite):
+    """A class to manage missiles fired from the jet."""
+    
+    def __init__(self, ss_game):
+        super().__init__()
+        self.screen = ss_game.screen
+        self.settings = ss_game.settings
+        self.color = self.settings.missile_color
+
+        # Create a missile rect at (0, 0) and then set correct position.
+        self.rect = pygame.Rect(0, 0, self.settings.missile_width, self.settings.missile_height)
+        self.rect.midright = ss_game.jet.rect.midright
+
+        # Store the missiles position as a decimal value.
+        self.x = float(self.rect.x)
+
+    def update(self):
+        """Move the missiles to the right on the screen."""
+        # Update the decimal position of the missile.
+        self.x += self.settings.missile_speed
+        # Update the rect position
+        self.rect.x = self.x
+
+    def draw_missile(self):
+        """Draw the bullet to the screen."""
+        pygame.draw.rect(self.screen, self.color, self.rect)
+```
+
+#### *bat.py*
+```
+import pygame
+from pygame.sprite import Sprite
+from random import randint
+
+class Bat(Sprite):
+    """A class for the enemy of the Sideways Shotoer game."""
+
+    def __init__(self, ss_game):
+        """Initialize a bat."""
+        super().__init__()
+        self.screen = ss_game.screen
+        self.settings = ss_game.settings
+
+        # Load the bat image and get its rect.
+        self.image = pygame.image.load('chapter13_exercises/images/bat.png')
+        self.rect = self.image.get_rect()
+
+        # Start each bat at a random position on the right side of the screen.
+        self.rect.left = self.screen.get_rect().right
+
+        bat_top_max = self.settings.screen_height - self.rect.height
+        self.rect.top = randint(0, bat_top_max)
+
+        # Store each bats horizontal position.
+        self.x = float(self.rect.x)
+
+    def update(self):
+        """Move the bats left."""
+        self.x -= self.settings.bat_speed
+        self.rect.x = self.x
+```
+
+#### *ss_settings.py*
+```
+# Exercise 12-6 Sideways Shooter
+
+# Settings file for Sideways Shooter
+
+class Settings:
+    """A class to store all settings for Sideways Shooter"""
+
+    def __init__(self):
+        """Initialize the game's settings."""
+        # Screen Settings
+        self.screen_width = 1200
+        self.screen_height = 800
+        self.bg_color = (230, 230, 230)
+
+        # Jet Settings
+        self.jet_speed = 1.5
+
+        # Missile Settings
+        self.missile_speed = 1.5
+        self.missile_width = 15
+        self.missile_height = 3
+        self.missile_color = (60, 60, 60)
+        self.missiles_allowed = 5
+
+        # Bat Settings
+        self.bat_speed = 0.5
+        self.bat_frequency = 0.008
+
+```
